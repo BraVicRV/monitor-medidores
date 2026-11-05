@@ -1,0 +1,197 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Monitor de Medidores Inteligentes</title>
+<style>
+:root{--bg:#f4f6f9;--cd:#fff;--tx:#1b2230;--mu:#667085;--bd:#e1e5eb;--ac:#2563eb;--ok:#16a34a;--wa:#d97706;--er:#dc2626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141b;--cd:#1a202b;--tx:#e8ecf3;--mu:#9aa5b8;--bd:#2b3342;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10141b;--cd:#1a202b;--tx:#e8ecf3;--mu:#9aa5b8;--bd:#2b3342;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:18px 20px 14px;background:linear-gradient(120deg,#1e3a8a,#2563eb 55%,#06b6d4);color:#fff}header .sub{color:#dbeafe}h1{margin:0;font-size:20px}.sub{color:var(--mu);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:8px 20px;align-items:center}
+.bar select,.bar input[type=search]{background:var(--cd);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font:inherit}
+.btn{background:var(--ac);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600}
+main{padding:8px 20px 30px;max-width:1300px;margin:auto}
+.grid{display:grid;gap:12px}.k{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.c2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;min-width:0}
+.kv{font-size:24px;font-weight:700}.kl{color:var(--mu);font-size:12px}
+h2{font-size:14px;margin:0 0 8px}canvas{max-height:280px}
+.card{box-shadow:0 8px 22px rgba(20,35,80,.10);transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(20,35,80,.18)}
+#kp .card{border-top:4px solid var(--ac);background:linear-gradient(180deg,rgba(37,99,235,.10),var(--cd) 70%)}#kp .kv{background:linear-gradient(90deg,#2563eb,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.t3d{transform:perspective(700px) rotateX(38deg);transform-origin:50% 60%;margin:-8px 0}
+.zc b{font-size:15px}.pill{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;color:#fff}
+.sc{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;margin:6px 0}.sc i{display:block;height:100%;background:var(--ok)}
+.tw{overflow-x:auto;max-height:420px}table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}th{position:sticky;top:0;background:var(--cd)}
+td.o{white-space:normal;min-width:220px}#empty{text-align:center;padding:50px 10px;color:var(--mu)}
+</style></head><body>
+<header><h1>Monitor de Medidores Inteligentes</h1><div class="sub">Carga uno o varios Excel mensuales: el análisis se hace en tu navegador y nada se sube a ningún servidor.</div></header>
+<div class="bar">
+<b>1.</b><select id="lz"></select><select id="lm"></select><input id="ly" type="number" value="2026" style="width:84px;background:var(--cd);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font:inherit"><b>2.</b><label class="btn">Cargar Excel<input id="f" type="file" accept=".xlsx,.xls" hidden></label><span class="btn" id="cl" style="background:var(--mu)">Limpiar todo</span></div>
+<div id="log" class="sub" style="padding:0 20px"></div>
+<div class="bar"><span class="sub">Ver:</span><label class="sub"><input type="checkbox" id="d3" checked> Gráficos 3D</label>
+<select id="fz"></select><select id="fp"></select><select id="fc"></select><select id="fs"></select>
+<input id="q" type="search" placeholder="Buscar MAC, suministro, ruta…"><span id="fl" class="sub"></span><span class="btn" id="pdf" style="margin-left:auto">Descargar PDF</span></div>
+<main><div id="empty">Aún no hay datos. Elige la <b>zona</b> y el <b>mes</b> de las lecturas y luego pulsa <b>Cargar Excel</b>. Cada Excel corresponde a una sola zona: repite el proceso para otros meses u otras zonas.</div>
+<div id="app" hidden>
+<div class="grid k" id="kp"></div><h2 style="margin:16px 0 8px">Bondades y desperfectos por zona</h2><div class="grid k" id="zs"></div>
+<div class="grid c2" style="margin-top:12px">
+<div class="card"><h2>Consumo total por mes y zona (kWh)</h2><canvas id="c1"></canvas></div>
+<div class="card"><h2>Salud de lecturas por zona (periodo)</h2><canvas id="c2"></canvas></div>
+<div class="card"><h2>Incidencias por categoría y zona</h2><div class="sub" style="font-size:12px;margin-bottom:8px"><b>Administrativo</b>: no es una falla del equipo sino un estado de gestión (depurado, anulado, medidor en otro suministro, cambio de medidor pendiente de actualizar en el sistema, domicilio cerrado, suministro sin registrar o facturación por promedio). <b>Hardware</b>: error de flash o display apagado. <b>Comunicación</b>: no responde al servidor o sin conexión. <b>Apagado/sin lectura</b>: medidor apagado o sin lectura o consumo. <b>Lectura irregular</b>: lecturas discontinuas o cortadas. Lo que no encaja en ninguna se muestra con su propio texto.</div><canvas id="c3"></canvas></div>
+<div class="card"><h2>Distribución de consumo (periodo)</h2><canvas id="c4"></canvas></div>
+<div class="card"><h2>Medidores por zona</h2><canvas id="c5"></canvas></div>
+<div class="card"><h2>Sin lectura y consumo 0 por mes</h2><canvas id="c6"></canvas></div>
+<div class="card"><h2>Lecturados vs no lecturados por zona (periodo)</h2><canvas id="c7"></canvas></div>
+<div class="card"><h2>Cobertura de lectura (% lecturados) por mes</h2><canvas id="c8"></canvas></div>
+<div class="card"><h2>Top 10 mayores consumos del periodo (kWh)</h2><canvas id="c9"></canvas></div></div>
+<div class="card" style="margin-top:12px"><h2>Medidores que se están promediando</h2><div class="sub" style="font-size:12px;margin-bottom:8px">Su consumo se factura por promedio: tienen la observación de facturación por promedio, o llevan 2 o más meses seguidos sin lectura real (sin lectura o con consumo 0). Con un solo mes cargado solo se detectan por observación; carga más meses para ver la reincidencia.</div><div class="tw" style="max-height:300px"><table id="tp"></table></div></div>
+<div class="card" style="margin-top:12px"><h2>Detalle de medidores (primero los que presentan problemas)</h2><div class="tw"><table id="tb"></table></div></div></div></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+const MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+const ZC={13:'#8b5cf6',14:'#2563eb',15:'#16a34a',16:'#d97706'};
+const STC={'Normal':'#16a34a','Consumo 0':'#d97706','Sin lectura':'#dc2626','Negativo':'#9333ea','Atípico':'#0891b2','Sin base':'#94a3b8'};
+const CATS=['Hardware','Comunicación','Apagado/sin lectura','Lectura irregular','Administrativo','Otros'];
+const CATC=['#dc2626','#d97706','#64748b','#0891b2','#9333ea','#94a3b8'];
+let M={},ch={},P=[],loaded=[],rep=null,DL=null;const $=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=c=>{if(!c)return null;if(c.t==='n')return c.v;if(c.t==='s'){const v=c.v.trim().replace(',','.');return v!==''&&!isNaN(+v)?+v:null}return null};
+const str=c=>c&&c.v!=null&&c.t!=='e'?String(c.v).trim():'';
+const pk=k=>MES[k%12][0].toUpperCase()+MES[k%12].slice(1,3)+' '+Math.floor(k/12);
+const zona=r=>{r=String(r);if(r.startsWith('3015401'))return 16;const z=parseInt(r.slice(2,4));return z>0?z:0};
+function cat(o){if(!o||/^ok$/i.test(o))return'';o=o.toLowerCase();
+if(/flash|display|embalse|hardware/.test(o))return'Hardware';
+if(/servidor|respuesta|responde|conexi|conecc|comunic/.test(o))return'Comunicación';
+if(/apagad|sin lectura|sin consumo/.test(o))return'Apagado/sin lectura';
+if(/irregular|continu|posterior|lectura de \d|normalidad/.test(o))return'Lectura irregular';
+if(/depurad|anulad|suministro|cambio de medidor|cerrado|registrad|facturaci/.test(o))return'Administrativo';return'Otros'}
+function parse(wb,fn,Z){const ks=new Set(),pre=new Set();let lastP=0;
+ const sheets=wb.SheetNames.filter(s=>!/obs|descarga/i.test(s));
+ let yr=(fn.match(/20\d\d/)||[0])[0]|0;
+ sheets.forEach(sn=>{const ws=wb.Sheets[sn];if(!ws||!ws['!ref'])return;const R=XLSX.utils.decode_range(ws['!ref']);
+  const g=(r,c)=>ws[XLSX.utils.encode_cell({r,c})];let hr=-1,col={},per={};
+  for(let r=R.s.r;r<=Math.min(R.s.r+5,R.e.r)&&hr<0;r++){const t={};per={};
+   for(let c=R.s.c;c<=R.e.c;c++){const h=str(g(r,c)).toLowerCase();if(!h)continue;
+    if(/mac/.test(h))t.mac=c;else if(/suministro/.test(h))t.sum=c;else if(/ruta/.test(h))t.ruta=c;
+    else{const m=h.match(/^(?:lectura\s+)?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|setiembre|septiembre|octubre|noviembre|diciembre)\s*(\d{4})?$/);
+     if(m){const y=+m[2]||yr||new Date().getFullYear();per[c]=y*12+MES.indexOf(m[1].replace('septiembre','setiembre'));if(m[2]&&!yr)yr=+m[2]}}}
+   if(t.mac!=null&&Object.keys(per).length){hr=r;col=t}}
+  if(hr<0)return;
+  const isCtl=/control/i.test(sn),oc=isCtl?12:7,last=Math.max(...Object.values(per));lastP=Math.max(lastP,last);
+  for(let r=hr+1;r<=R.e.r;r++){let mac=str(g(r,col.mac)).toUpperCase().replace(/^0X/,'');const sum=col.sum!=null?str(g(r,col.sum)):'';
+   if(!mac&&!sum)continue;const key=Z+'|'+(mac||sum);ks.add(key);
+   const m=M[key]||(M[key]={mac,sum,ruta:'',zona:Z,r:{},o:{}});
+   if(col.ruta!=null){const v=str(g(r,col.ruta));if(v){m.ruta=v;pre.add(v.slice(0,7))}}
+   for(const c in per){const v=num(g(r,+c));if(v!=null||m.r[per[c]]===undefined)m.r[per[c]]=v}
+   const ob=str(g(r,oc));if(ob&&ob.length<200&&isNaN(+ob))m.o[last]=ob}});return{lastP,n:ks.size,pre:[...pre]}}
+function stats(){const ks=new Set();Object.values(M).forEach(m=>Object.entries(m.r).forEach(([k,v])=>v!=null&&ks.add(+k)));
+ for(const k of [...ks]){}P=[...ks].sort((a,b)=>a-b)}
+const cons=(m,k)=>m.r[k]!=null&&m.r[k-1]!=null?m.r[k]-m.r[k-1]:null;
+const obsAt=(m,k)=>{if(m.o[k])return m.o[k];const ks=Object.keys(m.o).map(Number).filter(x=>x<=k);return ks.length?m.o[Math.max(...ks)]:''};
+function limits(k){const L={};[13,14,15,16,0].forEach(z=>{const a=Object.values(M).filter(m=>m.zona===z).map(m=>cons(m,k)).filter(v=>v>0);
+ if(a.length>5){const mu=a.reduce((s,v)=>s+v,0)/a.length,sd=Math.sqrt(a.reduce((s,v)=>s+(v-mu)**2,0)/a.length);L[z]=mu+3*sd}else L[z]=Infinity});return L}
+function stat(m,k,L){if(m.r[k]==null)return'Sin lectura';const c=cons(m,k);if(c==null)return'Sin base';if(c<0)return'Negativo';if(c===0)return'Consumo 0';return c>L[m.zona]?'Atípico':'Normal'}
+function opt(el,arr,all){el.innerHTML=`<option value="">${all}</option>`+arr.map(a=>`<option value="${esc(a[0])}">${esc(a[1])}</option>`).join('')}
+function setup(){const sel=(id,v)=>{const x=$(id).value;return x};const pz=$('fp').value;
+ opt($('fz'),[13,14,15,16].map(z=>[z,'Zona '+z]),'Todas las zonas');
+ opt($('fp'),P.map(k=>[k,pk(k)]).reverse(),'');$('fp').value=pz&&P.includes(+pz)?pz:P[P.length-1];
+ opt($('fc'),CATS.map(c=>[c,c]),'Toda incidencia');opt($('fs'),Object.keys(STC).map(s=>[s,s]),'Todo estado')}
+const sh=(h,f)=>'#'+[1,3,5].map(i=>{let v=parseInt(h.slice(i,i+2),16);v=f<0?v*(1+f):v+(255-v)*f;return Math.round(v).toString(16).padStart(2,'0')}).join('');
+let D3=true;
+Chart.register({id:'p3',beforeDatasetDraw(c,a){if(!D3)return;const m=a.meta,x=c.ctx,bg=c.data.datasets[a.index].backgroundColor,ok=h=>/^#[0-9a-f]{6}$/i.test(h);
+ if(m.type==='bar'){const d=8,hz=c.options.indexAxis==='y';
+  m.data.forEach((b,i)=>{const p=b.getProps(['x','y','base','width','height'],true);let L,R,T,B;
+   if(hz){L=Math.min(p.x,p.base);R=Math.max(p.x,p.base);T=p.y-p.height/2;B=p.y+p.height/2}else{L=p.x-p.width/2;R=p.x+p.width/2;T=Math.min(p.y,p.base);B=Math.max(p.y,p.base)}
+   const col=Array.isArray(bg)?bg[i]:bg;if(!ok(col)||R-L<1||B-T<1)return;
+   x.save();x.shadowColor='rgba(0,0,0,.28)';x.shadowBlur=6;x.shadowOffsetX=3;x.shadowOffsetY=3;x.fillStyle=sh(col,-.35);x.beginPath();x.moveTo(R,T);x.lineTo(R+d,T-d);x.lineTo(R+d,B-d);x.lineTo(R,B);x.fill();
+   x.shadowColor='transparent';x.fillStyle=sh(col,.4);x.beginPath();x.moveTo(L,T);x.lineTo(L+d,T-d);x.lineTo(R+d,T-d);x.lineTo(R,T);x.fill();x.restore()})}
+ if(m.type==='doughnut'){m.data.forEach((b,i)=>{if(!ok(bg[i]))return;const p=b.getProps(['x','y','startAngle','endAngle','innerRadius','outerRadius'],true);
+  for(let t=14;t>0;t-=2){x.beginPath();x.arc(p.x,p.y+t,p.outerRadius,p.startAngle,p.endAngle);x.arc(p.x,p.y+t,p.innerRadius,p.endAngle,p.startAngle,true);x.closePath();x.fillStyle=sh(bg[i],-.4);x.fill()}})}}});
+function mk(id,cfg){ch[id]&&ch[id].destroy();
+ if(cfg.type==='line')cfg.data.datasets.forEach(d=>{d.tension=.35;d.borderWidth=3;d.pointRadius=4;d.pointBackgroundColor=d.borderColor;d.fill=true;d.backgroundColor=d.borderColor+'26'});
+ if(cfg.type==='bar'&&!D3)cfg.data.datasets.forEach(d=>{d.borderRadius=6});
+ cfg.options=Object.assign({responsive:true,maintainAspectRatio:true,layout:{padding:{top:10,right:14,bottom:14}},plugins:{legend:{labels:{boxWidth:10,usePointStyle:true}}}},cfg.options||{});
+ if(cfg.type==='doughnut')cfg.options.cutout='50%';
+ $(id).classList.toggle('t3d',D3&&cfg.type==='doughnut');ch[id]=new Chart($(id),cfg)}
+function render(){
+ if(!P.length)return;const k=+$('fp').value,L=limits(k),q=$('q').value.toLowerCase(),fz=$('fz').value,fc=$('fc').value,fs=$('fs').value;
+ const all=Object.values(M).filter(m=>(!fz||m.zona==fz)&&(!q||(m.mac+m.sum+m.ruta).toLowerCase().includes(q)));
+ const rows=all.map(m=>({m,s:stat(m,k,L),c:cons(m,k),cat:cat(obsAt(m,k)),o:obsAt(m,k)})).filter(x=>(!fc||x.cat===fc)&&(!fs||x.s===fs));
+ $('empty').hidden=true;$('app').hidden=false;
+ const tot=rows.length,n=s=>rows.filter(x=>x.s===s).length,inc=rows.filter(x=>x.cat).length,sum=rows.reduce((a,x)=>a+(x.c>0?x.c:0),0),act=rows.filter(x=>x.c>0);
+ const stk=(m,q0)=>{let n=0;for(let q=q0;q>=P[0];q--){if(m.r[q]==null||(m.r[q-1]!=null&&m.r[q]-m.r[q-1]===0))n++;else break}return n};
+ const pr=rows.map(x=>({...x,n:stk(x.m,k),av:/promedio/i.test(x.o)})).filter(x=>x.av||x.n>=2).sort((a,b)=>b.av-a.av||b.n-a.n);
+ const K=[['Medidores',tot],['Normales',n('Normal')+' ('+(tot?Math.round(100*n('Normal')/tot):0)+'%)'],['Sin lectura',n('Sin lectura')],['Consumo 0',n('Consumo 0')],['Negativos',n('Negativo')],['Atípicos',n('Atípico')],['Con incidencia',inc],['Promediados',pr.length],['Consumo total kWh',Math.round(sum).toLocaleString('es-PE')],['Promedio kWh/medidor',act.length?(sum/act.length).toFixed(1):'–']];
+ $('kp').innerHTML=K.map(a=>`<div class="card"><div class="kl">${a[0]}</div><div class="kv">${a[1]}</div></div>`).join('');
+ const Z=[13,14,15,16].filter(z=>!fz||z==fz);
+ $('zs').innerHTML=Z.map(z=>{const r=rows.filter(x=>x.m.zona===z),t=r.length||1,ok=r.filter(x=>x.s==='Normal').length,
+  hw=r.filter(x=>x.cat==='Hardware').length,cm=r.filter(x=>x.cat==='Comunicación').length,pc=Math.round(100*ok/t);
+  return `<div class="card zc"><span class="pill" style="background:${ZC[z]}">Zona ${z}</span> <b>${pc}%</b> <span class="kl">operación normal</span><div class="sc"><i style="width:${pc}%"></i></div><div class="kl">${r.length} medidores · <b>${r.filter(x=>x.m.r[k]!=null).length} lecturados</b> · <b>${r.filter(x=>x.m.r[k]==null).length} no lecturados</b> · ${r.filter(x=>x.s==='Consumo 0').length} consumo 0<br>${hw} fallas de hardware · ${cm} de comunicación · ${r.filter(x=>x.s==='Atípico').length} atípicos · ${pr.filter(x=>x.m.zona===z).length} promediados</div></div>`}).join('');
+ const ids=new Set(rows.map(x=>x.m));const ml=[...ids];
+ mk('c1',{type:'bar',data:{labels:P.slice(1).map(pk),datasets:Z.map(z=>({label:'Zona '+z,backgroundColor:ZC[z],data:P.slice(1).map(p=>Math.round(ml.filter(m=>m.zona===z).reduce((a,m)=>a+Math.max(cons(m,p)||0,0),0)))}))},options:{scales:{x:{stacked:true},y:{stacked:true}}}});
+ const sk=Object.keys(STC);
+ mk('c2',{type:'bar',data:{labels:Z.map(z=>'Zona '+z),datasets:sk.map(s=>({label:s,backgroundColor:STC[s],data:Z.map(z=>rows.filter(x=>x.m.zona===z&&x.s===s).length)}))},options:{scales:{x:{stacked:true},y:{stacked:true}}}});
+ const nz=t=>t.toLowerCase().replace(/\s+/g,' ').trim(),cn={};
+ rows.forEach(x=>{if(x.cat==='Otros'){const t=nz(x.o);cn[t]=(cn[t]||0)+1}});
+ const top=Object.entries(cn).sort((a,b)=>b[1]-a[1]).slice(0,8).map(a=>a[0]),MN='Otras incidencias poco frecuentes';
+ const ck=x=>x.cat!=='Otros'?x.cat:top.includes(nz(x.o))?nz(x.o):MN;
+ const LK=[...CATS.slice(0,5),...top,MN].filter(c=>rows.some(x=>ck(x)===c)),ds=t=>{t=t.charAt(0).toUpperCase()+t.slice(1);return t.length>48?t.slice(0,47)+'…':t};
+ mk('c3',{type:'bar',data:{labels:LK.map(ds),datasets:Z.map(z=>({label:'Zona '+z,backgroundColor:ZC[z],data:LK.map(c=>rows.filter(x=>x.m.zona===z&&ck(x)===c).length)}))},options:{indexAxis:'y',scales:{x:{stacked:true},y:{stacked:true}}}});
+ const v=act.map(x=>x.c).sort((a,b)=>a-b),mx=v.length?v[Math.floor(v.length*.98)]||1:1,B=12,w=mx/B,h=Array(B).fill(0);v.forEach(x=>h[Math.min(B-1,Math.floor(x/w))]++);
+ mk('c4',{type:'bar',data:{labels:h.map((_,i)=>Math.round(i*w)+'–'+Math.round((i+1)*w)),datasets:[{label:'Medidores',backgroundColor:'#2563eb',data:h}]},options:{plugins:{legend:{display:false}}}});
+ mk('c5',{type:'doughnut',data:{labels:Z.map(z=>'Zona '+z),datasets:[{backgroundColor:Z.map(z=>ZC[z]),data:Z.map(z=>ml.filter(m=>m.zona===z).length)}]}});
+ mk('c6',{type:'line',data:{labels:P.map(pk),datasets:[{label:'Sin lectura',borderColor:'#dc2626',data:P.map(p=>ml.filter(m=>m.r[p]==null).length)},{label:'Consumo 0',borderColor:'#d97706',data:P.map(p=>ml.filter(m=>cons(m,p)===0).length)}]}});
+ const rd=Z.map(z=>ml.filter(m=>m.zona===z&&m.r[k]!=null).length),tz=Z.map(z=>ml.filter(m=>m.zona===z).length);
+ mk('c7',{type:'bar',data:{labels:Z.map((z,i)=>'Zona '+z+' ('+(tz[i]?Math.round(100*rd[i]/tz[i]):0)+'% lecturado)'),datasets:[{label:'Lecturados',backgroundColor:'#16a34a',data:rd},{label:'No lecturados',backgroundColor:'#dc2626',data:Z.map((z,i)=>tz[i]-rd[i])}]},options:{scales:{x:{stacked:true},y:{stacked:true}}}});
+ mk('c8',{type:'line',data:{labels:P.map(pk),datasets:Z.map(z=>({label:'Zona '+z,borderColor:ZC[z],data:P.map(p=>{const a=ml.filter(m=>m.zona===z),n=a.filter(m=>m.r[p]!=null).length;return n?Math.round(100*n/a.length):null})}))},options:{scales:{y:{min:0,max:100}}}});
+ const tt=ml.map(m=>({m,c:cons(m,k)})).filter(x=>x.c>0).sort((a,b)=>b.c-a.c).slice(0,10);
+ mk('c9',{type:'bar',data:{labels:tt.map(x=>'Z'+x.m.zona+' '+(x.m.mac||x.m.sum)),datasets:[{label:'kWh',backgroundColor:tt.map(x=>ZC[x.m.zona]),data:tt.map(x=>Math.round(x.c))}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+ const ord={'Sin lectura':0,'Negativo':1,'Atípico':2,'Consumo 0':3,'Sin base':4,'Normal':5};
+ rows.sort((a,b)=>ord[a.s]-ord[b.s]||(b.cat?1:0)-(a.cat?1:0));
+ $('fl').textContent=rows.length+' medidores';rep={rows,pr};
+ $('tp').innerHTML=pr.length?'<tr><th>Zona</th><th>MAC</th><th>Suministro</th><th>Ruta</th><th>Meses seguidos sin lectura real</th><th>Motivo</th><th>Observación</th></tr>'+pr.slice(0,300).map(x=>`<tr><td>${x.m.zona}</td><td>${esc(x.m.mac)}</td><td>${esc(x.m.sum)}</td><td>${esc(x.m.ruta)}</td><td>${x.n}</td><td>${x.av?'Facturación por promedio (observación)':'Sin lectura real repetida'}</td><td class="o">${esc(x.o)}</td></tr>`).join(''):'<tr><td>Ninguno detectado con los datos cargados.</td></tr>';
+ $('tb').innerHTML='<tr><th>Zona</th><th>MAC</th><th>Suministro</th><th>Ruta</th><th>Lect. ant.</th><th>Lect. act.</th><th>kWh</th><th>Estado</th><th>Incidencia</th><th>Observación</th></tr>'+
+ rows.slice(0,400).map(x=>{const m=x.m,f=v=>v==null?'–':(+v).toFixed(1);return `<tr><td>${m.zona||'?'}</td><td>${esc(m.mac)}</td><td>${esc(m.sum)}</td><td>${esc(m.ruta)}</td><td>${f(m.r[k-1])}</td><td>${f(m.r[k])}</td><td>${f(x.c)}</td><td><span class="pill" style="background:${STC[x.s]}">${x.s}</span></td><td>${esc(x.cat==='Otros'?x.o:x.cat)}</td><td class="o">${esc(x.o)}</td></tr>`}).join('');}
+const sel0=()=>{const z=+$('lz').value,mo=$('lm').value,y=+$('ly').value;return z&&mo!==''&&y?{z,sel:y*12+ +mo}:null};
+$('f').onclick=e=>{if(!sel0()){e.preventDefault();alert('Primero elige la zona y el mes de las lecturas (paso 1).')}};
+$('f').onchange=async e=>{const s=sel0();if(!s)return;
+ for(const f of e.target.files){const zm=f.name.toUpperCase().match(/(?:JULIACA|ZONA)\D{0,3}0?(1[3-6])/);
+  if(zm&&+zm[1]!==s.z&&!confirm('El nombre "'+f.name+'" indica zona '+zm[1]+' pero elegiste zona '+s.z+'. ¿Continuar de todos modos?'))continue;
+  const r=parse(XLSX.read(await f.arrayBuffer(),{type:'array'}),f.name,s.z);
+  let w=r.lastP&&r.lastP!==s.sel?' ⚠ las columnas del archivo llegan hasta '+pk(r.lastP)+', no '+pk(s.sel):'';
+  loaded.push('Zona '+s.z+' · '+pk(s.sel)+' · '+r.n+' medidores · rutas '+(r.pre.slice(0,4).join(', ')||'–')+' · '+f.name+w)}
+ $('log').innerHTML=loaded.map(l=>'• '+esc(l)).join('<br>');
+ stats();setup();render();e.target.value=''};
+$('cl').onclick=()=>{M={};P=[];loaded=[];$('log').innerHTML='';$('app').hidden=true;$('empty').hidden=false};
+opt($('lz'),[13,14,15,16].map(z=>[z,'Zona '+z]),'Zona de las lecturas…');opt($('lm'),MES.map((m,i)=>[i,m[0].toUpperCase()+m.slice(1)]),'Mes de las lecturas…');
+['fz','fp','fc','fs'].forEach(i=>$(i).onchange=render);$('q').oninput=render;
+(async()=>{try{DL=await claude.use('downloads')}catch(e){}})();
+async function savePDF(){
+ if(!rep){alert('Primero carga un Excel.');return}
+ const {jsPDF}=window.jspdf,C0=Chart.defaults.color,A0=Chart.defaults.animation;
+ Chart.defaults.color='#333';Chart.defaults.animation=false;render();
+ const im=['c1','c2','c3','c4','c5','c6','c7','c8','c9'].map(id=>{const s=$(id),c=document.createElement('canvas');c.width=s.width;c.height=s.height;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(s,0,0);return{u:c.toDataURL('image/jpeg',.92),r:c.height/c.width,t:s.parentNode.querySelector('h2').textContent}});
+ Chart.defaults.color=C0;Chart.defaults.animation=A0;render();
+ const d=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,mg=10,h2=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+ const zs=$('fz').value?'Zona '+$('fz').value:'Todas las zonas',pt=pk(+$('fp').value);
+ d.setFontSize(16);d.text('Reporte de medidores inteligentes',mg,14);
+ d.setFontSize(10);d.text(zs+' - Periodo: '+pt+' - Generado: '+new Date().toLocaleDateString('es-PE'),mg,20);
+ d.text([...$('kp').children].map(e=>e.innerText.replace('\n',': ')).join('   |   '),mg,28,{maxWidth:W-2*mg});
+ d.setFontSize(12);d.text('Bondades y desperfectos por zona',mg,46);d.setFontSize(10);
+ [...$('zs').children].forEach((e,i)=>d.text(e.innerText.replace(/\s+/g,' '),mg,54+i*11,{maxWidth:W-2*mg}));
+ d.addPage();const cw=(W-2*mg-12)/3;
+ im.forEach((g,i)=>{const hh=Math.min(cw*g.r,80),w=hh/g.r,x=mg+(i%3)*(cw+6),y=22+Math.floor((i%6)/3)*95;if(i===6)d.addPage();d.setFontSize(9);d.text(g.t,x,y-3);d.addImage(g.u,'JPEG',x,y,w,hh)});
+ d.addPage();d.setFontSize(12);d.text('Medidores que se estan promediando',mg,14);d.autoTable({startY:18,head:[['Zona','MAC','Suministro','Ruta','Meses sin lectura real','Observacion']],body:rep.pr.slice(0,200).map(x=>[x.m.zona,x.m.mac,x.m.sum,x.m.ruta,x.n,x.o||'-']),styles:{fontSize:7,cellPadding:1.2},headStyles:{fillColor:[217,119,6]}});
+ d.addPage();const f=v=>v==null?'-':(+v).toFixed(1),R=rep.rows.slice(0,400);
+ d.autoTable({startY:mg,head:[['Zona','MAC','Suministro','Ruta','Lect. ant.','Lect. act.','kWh','Estado','Incidencia','Observacion']],
+  body:R.map(x=>[x.m.zona,x.m.mac,x.m.sum,x.m.ruta,f(x.m.r[+$('fp').value-1]),f(x.m.r[+$('fp').value]),f(x.c),x.s,x.cat==='Otros'?x.o:x.cat,x.o]),
+  styles:{fontSize:7,cellPadding:1.2},headStyles:{fillColor:[37,99,235]},columnStyles:{9:{cellWidth:70}},
+  didParseCell:h=>{if(h.section==='body'&&h.column.index===7&&STC[h.cell.raw]){h.cell.styles.fillColor=h2(STC[h.cell.raw]);h.cell.styles.textColor=255}}});
+ if(rep.rows.length>400){d.setFontSize(8);d.text('Se muestran los primeros 400 de '+rep.rows.length+' medidores (problemas primero).',mg,d.lastAutoTable.finalY+6)}
+ const blob=d.output('blob'),fn='reporte_medidores_'+zs.replace(/\s/g,'_')+'_'+pt.replace(' ','_')+'.pdf';
+ if(DL){try{await DL.save({filename:fn,data:blob})}catch(e){if(e&&e.code!=='declined')alert('No se pudo guardar el PDF ('+(e.code||e)+')')}}else d.save(fn)}
+$('pdf').onclick=savePDF;$('d3').onchange=()=>{D3=$('d3').checked;if(rep)render()};
+const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--mu').trim()||'#667085';
+</script></body></html>

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: monitor-medidores
+    runtime: static
+    buildCommand: echo "sitio estatico, sin build"
+    staticPublishPath: public
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
